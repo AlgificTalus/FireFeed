@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from pathlib import Path
+
 import folium
 import geopandas as gpd
 import requests
@@ -19,9 +20,8 @@ TILES_ATTR = "USGS The National Map"
 BASE_DIR = Path(__file__).parent
 DB_PATH = BASE_DIR / "or_wa_fires.gpkg"
 MAP_PATH = BASE_DIR / "fire_map.html"
-
-
-
+# Simplification tolerance for the web map, in degrees (0.001 is roughly 100 m)
+MAP_SIMPLIFY = 0.001
 
 # --- Fetch ---
 response = requests.get(URL, params=PARAMS)
@@ -50,10 +50,16 @@ if DB_PATH.exists():
     gdf.to_file(DB_PATH, layer="fires", mode="a")
 else:
     gdf.to_file(DB_PATH, layer="fires", mode="w")
+
 # --- Map ---
+# Simplify a copy of the perimeters so the HTML file stays small.
+# The full-detail geometry is still what gets saved to the database above.
+map_gdf = gdf.copy()
+map_gdf["geometry"] = map_gdf.geometry.simplify(MAP_SIMPLIFY)
+
 m = folium.Map(location=MAP_CENTER, zoom_start=6, tiles=TILES, attr=TILES_ATTR)
 folium.GeoJson(
-    gdf,
+    map_gdf,
     tooltip=folium.GeoJsonTooltip(
         fields=["name", "acres", "pct_contained"],
         aliases=["Fire:", "Acres:", "% Contained:"]
