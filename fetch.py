@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import folium
 import geopandas as gpd
@@ -16,8 +16,11 @@ STATES = ["US-OR", "US-WA"]
 MAP_CENTER = [45.5, -120.5]
 TILES = "https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}"
 TILES_ATTR = "USGS The National Map"
-DB_PATH = Path("C:/Conda_Projects/FireFeed/or_wa_fires.gpkg")
-MAP_PATH = Path("C:/Conda_Projects/FireFeed/fire_map.html")
+BASE_DIR = Path(__file__).parent
+DB_PATH = BASE_DIR / "or_wa_fires.gpkg"
+MAP_PATH = BASE_DIR / "fire_map.html"
+
+
 
 
 # --- Fetch ---
@@ -41,7 +44,7 @@ gdf["acres"] = gdf["acres"].round(0)
 print(f"{len(gdf)} fires in {STATES}")
 
 # --- Save ---
-run_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+run_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
 gdf["run_time"] = run_time
 if DB_PATH.exists():
     gdf.to_file(DB_PATH, layer="fires", mode="a")
