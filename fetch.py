@@ -4,6 +4,8 @@ from pathlib import Path
 import folium
 import geopandas as gpd
 import requests
+import branca.colormap as cm
+
 
 # --- Settings ---
 URL = "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query"
@@ -54,15 +56,32 @@ else:
 # --- Map ---
 # Simplify a copy of the perimeters so the HTML file stays small.
 # The full-detail geometry is still what gets saved to the database above.
+
+colormap = cm.LinearColormap(
+    colors=["red", "orange", "green"],
+    vmin=0,
+    vmax=100,
+    caption="% Contained"
+)
+def style_fire(feature):
+    pct = feature["properties"]["pct_contained"]
+    if pct is None:
+        color = "gray"
+    else:
+        color = colormap(pct)
+    return {"color": color, "fillColor": color, "weight": 1, "fillOpacity": 0.6}
+
 map_gdf = gdf.copy()
 map_gdf["geometry"] = map_gdf.geometry.simplify(MAP_SIMPLIFY)
 
 m = folium.Map(location=MAP_CENTER, zoom_start=6, tiles=TILES, attr=TILES_ATTR)
 folium.GeoJson(
     map_gdf,
+    style_function=style_fire,
     tooltip=folium.GeoJsonTooltip(
         fields=["name", "acres", "pct_contained"],
         aliases=["Fire:", "Acres:", "% Contained:"]
     )
 ).add_to(m)
+colormap.add_to(m)
 m.save(MAP_PATH)
