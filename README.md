@@ -1,12 +1,14 @@
 # FireFeed
 
-A Python script that pulls current wildfire perimeters for Oregon and Washington, stores each run in a spatial database, and maps the results.
+A Python pipeline that pulls current wildfire perimeters for Oregon and Washington every day, stores each run in a spatial database, and maps the results.
 
 ## What it does
 
-`fetch.py` requests current fire perimeters from the National Interagency Fire Center's WFIGS Current Interagency Fire Perimeters dataset through its ArcGIS REST API. It filters the data to fires that started in Oregon and Washington, keeps the fire name, state, acreage, and percent containment, and adds a timestamp for the run.
+`fetch.py` requests current fire perimeters from the National Interagency Fire Center's WFIGS Current Interagency Fire Perimeters dataset through its ArcGIS REST API. It filters the data to fires that started in Oregon and Washington, keeps the fire name, state, acreage, and percent containment, and adds a UTC timestamp for the run.
 
-Each run is appended to a GeoPackage database, so the data builds a history over time. The script also produces an interactive web map (`fire_map.html`) of the current fires, with tooltips showing each fire's name, size, and containment.
+Each run is appended to a GeoPackage database, so the data builds a history over time. The script also produces an interactive web map (`fire_map.html`) with fires colored by percent containment and tooltips showing each fire's name, size, and containment. Perimeters are simplified for the web map to keep the file small, while full-detail geometry is kept in the database.
+
+The script runs automatically every day through GitHub Actions, which commits the updated database and map back to this repository.
 
 `query.py` uses SQL to query the fire history in the GeoPackage, for example counting fires per run or filtering by state and size.
 
@@ -15,20 +17,18 @@ Each run is appended to a GeoPackage database, so the data builds a history over
 - Python
 - requests (API calls)
 - geopandas (spatial data handling)
-- folium (web mapping)
+- folium and branca (web mapping and color scale)
 - SQLite and SQL (querying the GeoPackage)
+- GitHub Actions (daily scheduling)
 - USGS National Map basemap tiles
 
 ## How to run it
 
 1. Install the required packages:
-   `pip install geopandas requests folium`
-2. Update the file paths in the Settings section of each script to match your system.
-3. Run `fetch.py` to collect the latest fire data and update the map.
-4. Run `query.py` to query the stored history.
+   `pip install -r requirements.txt`
+2. Run `fetch.py` to collect the latest fire data and update the map.
+3. Run `query.py` to query the stored history.
 
 ## Next steps
-
-- Run the script automatically on a daily schedule
-- Host the map online so it updates on its own
 - Add queries that track fire growth and containment over time
+**Live map:** [algifictalus.github.io/FireFeed/fire_map.html](https://algifictalus.github.io/FireFeed/fire_map.html)
