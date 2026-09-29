@@ -29,6 +29,7 @@ The script runs automatically every day through GitHub Actions, which commits th
 2. Run `fetch.py` to collect the latest fire data and update the map.
 3. Run `query.py` to query the stored history.
 
-## Next steps
-- Add queries that track fire growth and containment over time
-**Live map:** [algifictalus.github.io/FireFeed/fire_map.html](https://algifictalus.github.io/FireFeed/fire_map.html)
+## 
+- weekly_change.py joins the week's first and latest snapshots to report acreage change, containment change, and fires that dropped out of the dataset.
+
+- **Live map:** [algifictalus.github.io/FireFeed/fire_map.html](https://algifictalus.github.io/FireFeed/fire_map.html)
