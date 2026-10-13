@@ -5,7 +5,7 @@ import folium
 import geopandas as gpd
 import requests
 import branca.colormap as cm
-
+import sqlite3
 
 # --- Settings ---
 URL = "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query"
@@ -20,7 +20,8 @@ MAP_CENTER = [45.5, -120.5]
 TILES = "https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}"
 TILES_ATTR = "USGS The National Map"
 BASE_DIR = Path(__file__).parent
-DB_PATH = BASE_DIR / "or_wa_fires.gpkg"
+HISTORY_PATH = BASE_DIR / "fire_history.db"
+CURRENT_PATH = BASE_DIR / "or_wa_fires.gpkg"
 MAP_PATH = BASE_DIR / "fire_map.html"
 # Simplification tolerance for the web map, in degrees (0.001 is roughly 100 m)
 MAP_SIMPLIFY = 0.001
@@ -45,17 +46,17 @@ gdf = gdf.rename(columns={
 gdf["acres"] = gdf["acres"].round(0)
 print(f"{len(gdf)} fires in {STATES}")
 
-# --- Save ---
+# --- Save history (attributes only, no geometry) ---
 run_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
 gdf["run_time"] = run_time
-if DB_PATH.exists():
-    gdf.to_file(DB_PATH, layer="fires", mode="a")
-else:
-    gdf.to_file(DB_PATH, layer="fires", mode="w")
+history = gdf.drop(columns="geometry")
+
+conn = sqlite3.connect(HISTORY_PATH)
+history.to_sql("fires", conn, if_exists="append", index=False)
+conn.close()
 
 # --- Map ---
 # Simplify a copy of the perimeters so the HTML file stays small.
-# The full-detail geometry is still what gets saved to the database above.
 
 colormap = cm.LinearColormap(
     colors=["red", "orange", "green"],
@@ -73,6 +74,10 @@ def style_fire(feature):
 
 map_gdf = gdf.copy()
 map_gdf["geometry"] = map_gdf.geometry.simplify(MAP_SIMPLIFY)
+
+# --- Save current perimeters (replaced every run) ---
+CURRENT_PATH.unlink(missing_ok=True)
+map_gdf.to_file(CURRENT_PATH, layer="fires")
 
 m = folium.Map(location=MAP_CENTER, zoom_start=6, tiles=TILES, attr=TILES_ATTR)
 folium.GeoJson(

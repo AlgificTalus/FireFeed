@@ -28,6 +28,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add or_wa_fires.gpkg fire_map.html
+          git add fire_history.db fire_map.html or_wa_fires.gpkg
           git commit -m "Daily fire data update" || echo "No changes to commit"
           git push
+        

@@ -9,7 +9,7 @@ pd.set_option("display.width", None)
 
 # --- Settings ---
 BASE_DIR = Path(__file__).parent
-DB_PATH = BASE_DIR / "or_wa_fires.gpkg"
+DB_PATH = BASE_DIR / "fire_history.db"
 
 # --- Shared snapshots ---
 # Both queries below need the same three named tables:
